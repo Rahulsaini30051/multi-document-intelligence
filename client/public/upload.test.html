@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Document Upload Test</title>
+</head>
+<body>
+  <h2>Upload Documents</h2>
+
+  <input type="file" id="files" multiple
+    accept=".pdf,.txt,.csv" />
+
+  <button onclick="uploadFiles()">Upload</button>
+
+  <pre id="result"></pre>
+
+  <script>
+    async function uploadFiles() {
+      const files = document.getElementById("files").files;
+      const formData = new FormData();
+
+      for (const file of files) {
+        formData.append("documents", file);
+      }
+
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/documents/upload",
+          {
+            method: "POST",
+            body: formData
+          }
+        );
+
+        const data = await response.json();
+        document.getElementById("result").textContent =
+          JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById("result").textContent =
+          error.message;
+      }
+    }
+  </script>
+</body>
+</html>

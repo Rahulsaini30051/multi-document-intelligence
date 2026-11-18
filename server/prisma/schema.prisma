@@ -1,0 +1,87 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Uploaded documents
+model Document {
+  id               String   @id @default(cuid())
+  filename         String
+  storedFilename   String
+  mimeType         String
+  fileSize         Int
+  filePath         String
+  extractedText    String?
+  processingStatus String   @default("UPLOADED")
+  errorMessage     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  analyses         AnalysisDocument[]
+  evidences        FindingEvidence[]
+
+  @@index([createdAt])
+}
+
+// AI analysis requests
+model Analysis {
+  id        String   @id @default(cuid())
+  prompt    String
+  status    String   @default("PENDING")
+  result    String?
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents AnalysisDocument[]
+  findings  Finding[]
+}
+
+// Many-to-many relationship
+model AnalysisDocument {
+  id         String @id @default(cuid())
+  analysisId String
+  documentId String
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, documentId])
+}
+
+// Individual AI findings
+model Finding {
+  id             String   @id @default(cuid())
+  analysisId     String
+  type           String
+  severity       String
+  title          String
+  description    String
+  interpretation String?
+  createdAt      DateTime @default(now())
+
+  analysis Analysis          @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  evidence FindingEvidence[]
+
+  @@index([analysisId])
+}
+
+// Evidence supporting a finding
+model FindingEvidence {
+  id          String @id @default(cuid())
+  findingId   String
+  documentId  String
+  evidenceText String
+  fieldName   String?
+
+  finding  Finding  @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([findingId])
+  @@index([documentId])
+}
